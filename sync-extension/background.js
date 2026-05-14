@@ -1,5 +1,5 @@
 importScripts("socket.io.js");
-const SERVER_URL = "https://syncwatch-lw6c.onrender.com";
+const SERVER_URL = "https://syncwatch-server-production-2664.up.railway.app";
 let socket = null;
 let roomInfo = null;
 
@@ -19,16 +19,12 @@ function connectSocket(user) {
   socket.on("disconnect", () => console.log("[BG] socket disconnected"));
 
   socket.on("sync-event", (data) => {
-    console.log("[BG] got sync-event from server, sending to active tab:", data);
-
-    if (data.type === "nav" && roomInfo) {
-      roomInfo.syncUrl = data.url;
-      chrome.storage.local.set({ swSyncUrl: data.url });
-    }
-
-    if (roomInfo && roomInfo.tabId) {
-      chrome.tabs.sendMessage(roomInfo.tabId, { type: "sync-event", data }).catch(() => { });
-    }
+    console.log("[BG] got sync-event from server, broadcasting to all tabs:", data);
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach((tab) => {
+        chrome.tabs.sendMessage(tab.id, { type: "sync-event", data }).catch(() => { });
+      });
+    });
   });
 
   socket.on("chat-message", (data) => {
@@ -97,7 +93,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "send-sync") {
     console.log("[BG] sending sync to server:", msg.data);
     if (socket?.connected && roomInfo) {
-      roomInfo.tabId = sender.tab.id; // update active tab based on media interaction
       socket.emit("sync-event", msg.data);
     } else {
       console.log("[BG] cant send - socket connected:", socket?.connected, "roomInfo:", !!roomInfo);
@@ -161,8 +156,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg.type === "url-change") {
-    if (socket?.connected && roomInfo) {
-      roomInfo.tabId = sender.tab.id; // update active tab on navigation
+    if (socket?.connected && roomInfo && roomInfo.tabId === sender.tab.id) {
       roomInfo.syncUrl = msg.url;
       chrome.storage.local.set({ swSyncUrl: msg.url });
       socket.emit("url-change", { url: msg.url });
@@ -171,18 +165,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg.type === "tab-sync-check") {
-    if (roomInfo) {
-      if (roomInfo.tabId === sender.tab.id) {
-        if (msg.url && msg.url !== roomInfo.syncUrl && (roomInfo.controlMode === "everyone" || roomInfo.isHost)) {
-          roomInfo.syncUrl = msg.url;
-          chrome.storage.local.set({ swSyncUrl: msg.url });
-          if (socket?.connected) socket.emit("url-change", { url: msg.url });
-        }
-        sendResponse({ active: true, ...roomInfo });
-      } else {
-        sendResponse({ active: false });
-      }
-    }
+    if (roomInfo) sendResponse({ active: true, ...roomInfo });
     else sendResponse({ active: false });
     return true;
   }

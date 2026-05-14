@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "SyncWatch",
+  "version": "2.0.0",
+  "description": "Watch and listen together in real-time.",
+  "permissions": ["tabs", "scripting", "storage", "activeTab"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": { "default_title": "Toggle SyncWatch" },
+  "web_accessible_resources": [
+    {
+      "resources": ["socket.io.js", "sidebar.html", "sidebar.js", "sidebar.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
