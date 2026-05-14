@@ -1,5 +1,5 @@
 importScripts("socket.io.js");
-const SERVER_URL = "http://localhost:3000";
+const SERVER_URL = "https://syncwatch-server.onrender.com";
 let socket = null;
 let roomInfo = null;
 
@@ -20,7 +20,7 @@ function connectSocket(user) {
 
   socket.on("sync-event", (data) => {
     console.log("[BG] got sync-event from server, sending to active tab:", data);
-    
+
     if (data.type === "nav" && roomInfo) {
       roomInfo.syncUrl = data.url;
       chrome.storage.local.set({ swSyncUrl: data.url });

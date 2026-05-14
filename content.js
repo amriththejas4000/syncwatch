@@ -11,7 +11,7 @@ let currentUrl = location.href;
 
 setInterval(() => {
   if (!roomActive) return;
-  
+
   if (location.href !== currentUrl) {
     currentUrl = location.href;
     if (controlMode === "everyone" || isHost) {
@@ -22,7 +22,7 @@ setInterval(() => {
 
   // YouTube ad selectors (these safely disappear from the DOM when not active)
   const adEl = document.querySelector('.ad-showing, .ad-interrupting, .ytp-ad-player-overlay, .ytp-ad-module:not(:empty)');
-  
+
   let isHotstarAd = false;
   if (location.hostname.includes('hotstar.com')) {
     const player = document.querySelector('[data-testid="player-space-container"]');
@@ -72,7 +72,7 @@ function injectSidebar() {
   document.addEventListener("mousemove", (e) => {
     const threshold = sidebarOpen ? 390 : 60;
     const inArea = e.clientX <= threshold;
-    
+
     if (inArea !== isHoveringArea) {
       isHoveringArea = inArea;
       if (inArea) {
@@ -208,10 +208,10 @@ function applySyncEvent(data) {
   if (isAdPlaying) { console.log("[SW] ad is playing, ignoring incoming syncs"); return; }
   const els = document.querySelectorAll("video,audio");
   if (els.length === 0) { console.log("[SW] no media element to apply sync"); return; }
-  
+
   console.log("[SW] applying sync to", els.length, "elements", data);
   isSyncing = true;
-  
+
   els.forEach(el => {
     if (data.type === "seek" || (data.currentTime !== undefined && Math.abs(el.currentTime - data.currentTime) > 1.5)) {
       if (data.currentTime !== undefined) el.currentTime = data.currentTime;
